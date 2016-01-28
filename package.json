@@ -62,5 +62,9 @@
     "run-sequence": "^1.1.5",
     "sinon": "^1.17.2",
     "superstack": "0.0.4"
+  },
+  "dependencies": {
+    "flowsync": "^0.1.12",
+    "incognito": "^0.1.4"
   }
 }
