@@ -1,6 +1,6 @@
 {
   "name": "staircase",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Organize actions into steps.",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,10 @@
       "email": "mike@mike-mcmullan.com"
     }
   ],
-  "author": "dcrockwell",
+  "author": {
+		"name": "dcrockwell",
+		"email": "dcautomates@gmail.com"
+	},
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/FreeAllMedia/staircase/issues"
