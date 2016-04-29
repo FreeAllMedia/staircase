@@ -1,6 +1,6 @@
 {
   "name": "staircase",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Organize actions into steps.",
   "main": "index.js",
   "scripts": {
