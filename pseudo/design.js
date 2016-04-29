@@ -11,6 +11,7 @@ export function handler(event, context) {
 	action
 		.series(authenticateAccount, authorizeAccount)
 		.parallel(doSomething, doSomethingElseAtTheSameTime)
+		.step(doSomethingCrazy)
 		.results((error, data) => {
 			if (error) {
 				context.fail(error);

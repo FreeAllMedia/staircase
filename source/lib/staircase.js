@@ -15,6 +15,11 @@ export default class Staircase {
 		return privateData(this).parameters;
 	}
 
+	step(newStep) {
+		this.series(newStep);
+		return this;
+	}
+
 	series(...steps) {
 		this.steps.push({
 			concurrency: "series",
