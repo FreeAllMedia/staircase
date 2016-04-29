@@ -21,9 +21,9 @@ describe("Staircase(...options)", () => {
 		});
 
 		it("should be read-only", () => {
-			() => {
+			(() => {
 				staircase.parameters = 3;
-			}.should.throw();
+			}).should.throw();
 		});
 	});
 });
