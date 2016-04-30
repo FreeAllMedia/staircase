@@ -17,7 +17,7 @@ describe("Staircase(...options)", () => {
 		clock.restore();
 	});
 
-	describe(".results(callback)", () => {
+	describe("results(callback) (series)", () => {
 		let callback,
 
 				stepOne,

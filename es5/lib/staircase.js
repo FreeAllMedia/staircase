@@ -57,18 +57,28 @@ var Staircase = function () {
 			return this;
 		}
 	}, {
-		key: "results",
-		value: function results(callback) {
+		key: "runSteps",
+		value: function runSteps(callback) {
 			var _this = this;
 
-			this.steps.forEach(function (stepGroup) {
-				switch (stepGroup.concurrency) {
-					case "series":
-						var stepTasks = stepGroup.steps.map(_this[createStepTask], _this);
-						_flowsync2.default.series(stepTasks, callback);
-						break;
+			var extraStepCount = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+
+			var initialStepCount = this.steps.length;
+			_flowsync2.default.mapSeries(this.steps, function (stepGroup, done) {
+				_flowsync2.default.series(stepGroup.steps, done);
+			}, function () {
+				extraStepCount = _this.steps.length - initialStepCount;
+				if (extraStepCount > 0) {
+					_this.runSteps(callback, extraStepCount);
+				} else {
+					callback();
 				}
 			});
+		}
+	}, {
+		key: "results",
+		value: function results(callback) {
+			this.runSteps(callback);
 		}
 	}, {
 		key: createStepTask,
@@ -77,7 +87,7 @@ var Staircase = function () {
 
 			return function (done) {
 				var stepArguments = _this2.parameters.concat([done]);
-				step.apply(undefined, _toConsumableArray(stepArguments));
+				step.call.apply(step, [_this2].concat(_toConsumableArray(stepArguments)));
 			};
 		}
 	}, {

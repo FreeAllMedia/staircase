@@ -12,13 +12,12 @@ describe("Staircase(...options)", () => {
 
 	describe(".step(stepFunction)", () => {
 		let stepFunction,
-				returnValue,
-				step;
+				returnValue;
 
 		beforeEach(() => {
-			stepFunction = () => {};
+			stepFunction = sinon.spy();
+
 			returnValue = staircase.step(stepFunction);
-			step = staircase.steps[0];
 		});
 
 		it("should return the object instance to enable chaining", () => {
@@ -26,11 +25,9 @@ describe("Staircase(...options)", () => {
 		});
 
 		it("should add the step function to steps as a series", () => {
-			step.concurrency.should.eql("series");
-		});
-
-		it("should add the step function to steps", () => {
-			step.steps.should.eql([stepFunction]);
+			staircase.steps.should.eql([
+				{concurrency: "series", steps: [stepFunction]}
+			]);
 		});
 	});
 });

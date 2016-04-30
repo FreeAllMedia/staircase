@@ -28,21 +28,28 @@ export default class Staircase {
 		return this;
 	}
 
-	results(callback) {
-		this.steps.forEach(stepGroup => {
-			switch(stepGroup.concurrency) {
-				case "series":
-					const stepTasks = stepGroup.steps.map(this[createStepTask], this);
-					Async.series(stepTasks, callback);
-					break;
+	runSteps(callback, extraStepCount = 0) {
+		const initialStepCount = this.steps.length;
+		Async.mapSeries(this.steps, (stepGroup, done) => {
+			Async.series(stepGroup.steps, done);
+		}, () => {
+			extraStepCount = this.steps.length - initialStepCount;
+			if (extraStepCount > 0) {
+				this.runSteps(callback, extraStepCount);
+			} else {
+				callback();
 			}
 		});
+	}
+
+	results(callback) {
+		this.runSteps(callback);
 	}
 
 	[createStepTask](step) {
 		return (done) => {
 			const stepArguments = this.parameters.concat([done]);
-			step(...stepArguments);
+			step.call(this, ...stepArguments);
 		};
 	}
 }
