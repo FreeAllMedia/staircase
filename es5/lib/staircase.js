@@ -20,7 +20,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var createStepTask = Symbol();
+var runStep = Symbol(),
+    runSteps = Symbol();
 
 var Staircase = function () {
 	function Staircase() {
@@ -59,26 +60,49 @@ var Staircase = function () {
 	}, {
 		key: "results",
 		value: function results(callback) {
+			this[runSteps](callback);
+		}
+	}, {
+		key: runSteps,
+		value: function value(callback) {
 			var _this = this;
 
-			this.steps.forEach(function (stepGroup) {
+			var extraStepCount = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+
+			var steps = this.steps.slice(-extraStepCount);
+
+			var initialStepCount = this.steps.length;
+
+			_flowsync2.default.mapSeries(steps, function (stepGroup, done) {
 				switch (stepGroup.concurrency) {
 					case "series":
-						var stepTasks = stepGroup.steps.map(_this[createStepTask], _this);
-						_flowsync2.default.series(stepTasks, callback);
-						break;
+						_flowsync2.default.mapSeries(stepGroup.steps, _this[runStep].bind(_this), function (error) {
+							done(error);
+						});
+				}
+			}, function (error) {
+				if (!error) {
+					extraStepCount = _this.steps.length - initialStepCount;
+					if (extraStepCount > 0) {
+						_this[runSteps](callback, extraStepCount);
+					} else {
+						if (callback) {
+							callback();
+						}
+					}
+				} else {
+					if (callback) {
+						callback(error);
+					}
 				}
 			});
 		}
 	}, {
-		key: createStepTask,
-		value: function value(step) {
-			var _this2 = this;
-
-			return function (done) {
-				var stepArguments = _this2.parameters.concat([done]);
-				step.apply(undefined, _toConsumableArray(stepArguments));
-			};
+		key: runStep,
+		value: function value(step, done) {
+			var parameters = (0, _incognito2.default)(this).parameters;
+			var stepArguments = parameters.concat([done]);
+			step.call.apply(step, [this].concat(_toConsumableArray(stepArguments)));
 		}
 	}, {
 		key: "parameters",
