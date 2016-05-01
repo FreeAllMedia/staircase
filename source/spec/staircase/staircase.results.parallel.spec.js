@@ -17,7 +17,7 @@ describe("Staircase(...options)", () => {
 		clock.restore();
 	});
 
-	describe(".results(callback)", () => {
+	describe("results(callback) (parallel)", () => {
 		let callback,
 
 				stepOne,
@@ -26,7 +26,9 @@ describe("Staircase(...options)", () => {
 
 		beforeEach(() => {
 			function mockStepFunction(argumentOne, argumentTwo, argumentThree, stepDone) {
-				setTimeout(stepDone, 100);
+				setTimeout(() => {
+					stepDone(null, 9);
+				}, 100);
 			}
 
 			stepOne = sinon.spy(mockStepFunction);
@@ -34,60 +36,39 @@ describe("Staircase(...options)", () => {
 			stepThree = sinon.spy(mockStepFunction);
 		});
 
-		it("should not call step two or three in parallel", done => {
+		it("should return itself to enable chaining", () => {
+			staircase.parallel(stepOne, stepTwo, stepThree).should.eql(staircase);
+		});
+
+		it("should return an array of all data returned by the step functions", done => {
 			staircase
-				.series(stepOne, stepTwo, stepThree)
+				.parallel(stepOne, stepTwo, stepThree)
+				.results((error, data) => {
+					data.should.eql([9, 9, 9]);
+					done();
+				});
+
+				clock.tick(350);
+		});
+
+		it("should return aggregated data from chained calls", done => {
+			staircase
+				.parallel(stepOne, stepTwo)
+				.parallel(stepThree)
+				.results((error, data) => {
+					data.should.eql([9, 9, 9]);
+					done();
+				});
+
+				clock.tick(350);
+		});
+
+		it("should call all steps in parallel", done => {
+			staircase
+				.parallel(stepOne, stepTwo, stepThree)
 				.results();
 
 			clock.tick(50);
-
-			const actualStepResults = {
-				stepOneCalled: stepOne.called,
-				stepTwoCalled: stepTwo.called,
-				stepThreeCalled: stepThree.called
-			};
-
-			const expectedStepResults = {
-				stepOneCalled: true,
-				stepTwoCalled: false,
-				stepThreeCalled: false
-			};
-
-			actualStepResults.should.eql(expectedStepResults);
-
-			done();
-		});
-
-		it("should not call step three in parallel", done => {
-			staircase
-				.series(stepOne, stepTwo, stepThree)
-				.results();
-
-			clock.tick(150);
-
-			const actualStepResults = {
-				stepOneCalled: stepOne.called,
-				stepTwoCalled: stepTwo.called,
-				stepThreeCalled: stepThree.called
-			};
-
-			const expectedStepResults = {
-				stepOneCalled: true,
-				stepTwoCalled: true,
-				stepThreeCalled: false
-			};
-
-			actualStepResults.should.eql(expectedStepResults);
-
-			done();
-		});
-
-		it("should call all steps", done => {
-			staircase
-				.series(stepOne, stepTwo, stepThree)
-				.results();
-
-			clock.tick(250);
 
 			const actualStepResults = {
 				stepOneCalled: stepOne.called,
@@ -108,10 +89,10 @@ describe("Staircase(...options)", () => {
 
 		it("should call each step function with .parameters as the arguments", () => {
 			staircase
-				.series(stepOne, stepTwo, stepThree)
+				.parallel(stepOne, stepTwo, stepThree)
 				.results();
 
-			clock.tick(250);
+			clock.tick(50);
 
 			const actualStepResults = {
 				stepOneCalled: stepOne.calledWith(...parameters),
@@ -129,30 +110,14 @@ describe("Staircase(...options)", () => {
 
 		});
 
-		it("should cancel step execution upon a step error", () => {
-			stepOne = sinon.spy((argumentOne, argumentTwo, argumentThree, stepDone) => {
-				stepDone(new Error());
-			});
-
+		it("should return nothing if no error occurs", done => {
 			staircase
-				.series(stepOne, stepTwo, stepThree)
+				.parallel(stepOne, stepTwo, stepThree)
 				.results();
 
-			clock.tick(250);
+			clock.tick(350);
 
-			const actualStepResults = {
-				stepOneCalled: stepOne.called,
-				stepTwoCalled: stepTwo.called,
-				stepThreeCalled: stepThree.called
-			};
-
-			const expectedStepResults = {
-				stepOneCalled: true,
-				stepTwoCalled: false,
-				stepThreeCalled: false
-			};
-
-			actualStepResults.should.eql(expectedStepResults);
+			done();
 		});
 
 		it("should return the step error if it occurs", done => {
@@ -168,7 +133,7 @@ describe("Staircase(...options)", () => {
 			};
 
 			staircase
-				.series(stepOne, stepTwo, stepThree)
+				.parallel(stepOne, stepTwo, stepThree)
 				.results(callback);
 
 			clock.tick(250);

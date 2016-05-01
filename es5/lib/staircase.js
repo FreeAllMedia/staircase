@@ -20,7 +20,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var createStepTask = Symbol();
+var runStep = Symbol(),
+    runSteps = Symbol();
 
 var Staircase = function () {
 	function Staircase() {
@@ -57,28 +58,66 @@ var Staircase = function () {
 			return this;
 		}
 	}, {
+		key: "parallel",
+		value: function parallel() {
+			for (var _len3 = arguments.length, steps = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+				steps[_key3] = arguments[_key3];
+			}
+
+			this.steps.push({
+				concurrency: "parallel",
+				steps: steps
+			});
+			return this;
+		}
+	}, {
 		key: "results",
 		value: function results(callback) {
+			this[runSteps](callback);
+		}
+	}, {
+		key: runSteps,
+		value: function value(callback) {
 			var _this = this;
 
-			this.steps.forEach(function (stepGroup) {
+			var extraStepCount = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+
+			var steps = this.steps.slice(-extraStepCount);
+
+			var initialStepCount = this.steps.length;
+
+			_flowsync2.default.mapSeries(steps, function (stepGroup, done) {
 				switch (stepGroup.concurrency) {
 					case "series":
-						var stepTasks = stepGroup.steps.map(_this[createStepTask], _this);
-						_flowsync2.default.series(stepTasks, callback);
+						_flowsync2.default.mapSeries(stepGroup.steps, _this[runStep].bind(_this), done);
 						break;
+					case "parallel":
+						_flowsync2.default.mapParallel(stepGroup.steps, _this[runStep].bind(_this), done);
+				}
+			}, function (error, data) {
+				if (!error) {
+					extraStepCount = _this.steps.length - initialStepCount;
+					if (extraStepCount > 0) {
+						_this[runSteps](callback, extraStepCount);
+					} else {
+						var flattenedData = [].concat.apply([], data);
+						if (callback) {
+							callback(null, flattenedData);
+						}
+					}
+				} else {
+					if (callback) {
+						callback(error);
+					}
 				}
 			});
 		}
 	}, {
-		key: createStepTask,
-		value: function value(step) {
-			var _this2 = this;
-
-			return function (done) {
-				var stepArguments = _this2.parameters.concat([done]);
-				step.apply(undefined, _toConsumableArray(stepArguments));
-			};
+		key: runStep,
+		value: function value(step, done) {
+			var parameters = (0, _incognito2.default)(this).parameters;
+			var stepArguments = parameters.concat([done]);
+			step.call.apply(step, [this].concat(_toConsumableArray(stepArguments)));
 		}
 	}, {
 		key: "parameters",
