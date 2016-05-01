@@ -29,6 +29,14 @@ export default class Staircase {
 		return this;
 	}
 
+	parallel(...steps) {
+		this.steps.push({
+			concurrency: "parallel",
+			steps: steps
+		});
+		return this;
+	}
+
 	results(callback) {
 		this[runSteps](callback);
 	}
@@ -44,9 +52,14 @@ export default class Staircase {
 					Async.mapSeries(
 						stepGroup.steps,
 						this[runStep].bind(this),
-						(error) => {
-							done(error);
-						}
+						done
+					);
+					break;
+				case "parallel":
+					Async.mapParallel(
+						stepGroup.steps,
+						this[runStep].bind(this),
+						done
 					);
 			}
 		}, (error) => {

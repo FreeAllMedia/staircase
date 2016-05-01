@@ -58,6 +58,19 @@ var Staircase = function () {
 			return this;
 		}
 	}, {
+		key: "parallel",
+		value: function parallel() {
+			for (var _len3 = arguments.length, steps = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+				steps[_key3] = arguments[_key3];
+			}
+
+			this.steps.push({
+				concurrency: "parallel",
+				steps: steps
+			});
+			return this;
+		}
+	}, {
 		key: "results",
 		value: function results(callback) {
 			this[runSteps](callback);
@@ -76,9 +89,10 @@ var Staircase = function () {
 			_flowsync2.default.mapSeries(steps, function (stepGroup, done) {
 				switch (stepGroup.concurrency) {
 					case "series":
-						_flowsync2.default.mapSeries(stepGroup.steps, _this[runStep].bind(_this), function (error) {
-							done(error);
-						});
+						_flowsync2.default.mapSeries(stepGroup.steps, _this[runStep].bind(_this), done);
+						break;
+					case "parallel":
+						_flowsync2.default.mapParallel(stepGroup.steps, _this[runStep].bind(_this), done);
 				}
 			}, function (error) {
 				if (!error) {
