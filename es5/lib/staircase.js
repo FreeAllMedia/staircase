@@ -94,14 +94,15 @@ var Staircase = function () {
 					case "parallel":
 						_flowsync2.default.mapParallel(stepGroup.steps, _this[runStep].bind(_this), done);
 				}
-			}, function (error) {
+			}, function (error, data) {
 				if (!error) {
 					extraStepCount = _this.steps.length - initialStepCount;
 					if (extraStepCount > 0) {
 						_this[runSteps](callback, extraStepCount);
 					} else {
+						var flattenedData = [].concat.apply([], data);
 						if (callback) {
-							callback();
+							callback(null, flattenedData);
 						}
 					}
 				} else {

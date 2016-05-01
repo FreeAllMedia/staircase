@@ -24,17 +24,46 @@ describe("Staircase(...options)", () => {
 				stepTwo,
 				stepThree;
 
-		beforeEach(() => {
-			function mockStepFunction(argumentOne, argumentTwo, argumentThree, stepDone) {
-				setTimeout(stepDone, 100);
-			}
+		function mockStepFunction(argumentOne, argumentTwo, argumentThree, stepDone) {
+			setTimeout(() => {
+				stepDone(null, 9);
+			}, 100);
+		}
 
+		beforeEach(() => {
 			stepOne = sinon.spy(mockStepFunction);
 			stepTwo = sinon.spy(mockStepFunction);
 			stepThree = sinon.spy(mockStepFunction);
 		});
 
-		it("should not call step two or three in parallel", done => {
+		it("should return itself to enable chaining", () => {
+			staircase.series(stepOne, stepTwo, stepThree).should.eql(staircase);
+		});
+
+		it("should return aggregated data from chained calls", done => {
+			staircase
+				.series(stepOne, stepTwo)
+				.series(stepThree)
+				.results((error, data) => {
+					data.should.eql([9, 9, 9]);
+					done();
+				});
+
+				clock.tick(350);
+		});
+
+		it("should return an array of all data returned by the step functions", done => {
+			staircase
+				.series(stepOne, stepTwo, stepThree)
+				.results((error, data) => {
+					data.should.eql([9, 9, 9]);
+					done();
+				});
+
+				clock.tick(350);
+		});
+
+		it("should not call the steps in parallel", done => {
 			staircase
 				.series(stepOne, stepTwo, stepThree)
 				.results();

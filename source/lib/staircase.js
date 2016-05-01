@@ -62,13 +62,14 @@ export default class Staircase {
 						done
 					);
 			}
-		}, (error) => {
+		}, (error, data) => {
 			if (!error) {
 				extraStepCount = this.steps.length - initialStepCount;
 				if (extraStepCount > 0) {
 					this[runSteps](callback, extraStepCount);
 				} else {
-					if (callback) {	callback();	}
+					const flattenedData = [].concat.apply([], data);
+					if (callback) {	callback(null, flattenedData);	}
 				}
 			} else {
 				if (callback) {	callback(error); }
