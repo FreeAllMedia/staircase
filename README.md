@@ -1,6 +1,6 @@
 # StairCase.js
 
-Create a portable collection of reusable functions and flow control.
+Create reusable & portable collections of functions with built-in flow control.
 
 1. Creates an object you can add asynchronous functions to.
 2. You tell the object which concurrencies to use for the functions.
