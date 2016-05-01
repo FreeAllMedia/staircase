@@ -1,7 +1,8 @@
 import privateData from "incognito";
 import Async from "flowsync";
 
-const createStepTask = Symbol();
+const runStep = Symbol(),
+			runSteps = Symbol();
 
 export default class Staircase {
 	constructor(...parameters) {
@@ -28,28 +29,43 @@ export default class Staircase {
 		return this;
 	}
 
-	runSteps(callback, extraStepCount = 0) {
+	results(callback) {
+		this[runSteps](callback);
+	}
+
+	[runSteps](callback, extraStepCount = 0) {
+		const steps = this.steps.slice(-extraStepCount);
+
 		const initialStepCount = this.steps.length;
-		Async.mapSeries(this.steps, (stepGroup, done) => {
-			Async.series(stepGroup.steps, done);
-		}, () => {
-			extraStepCount = this.steps.length - initialStepCount;
-			if (extraStepCount > 0) {
-				this.runSteps(callback, extraStepCount);
+
+		Async.mapSeries(steps, (stepGroup, done) => {
+			switch (stepGroup.concurrency) {
+				case "series":
+					Async.mapSeries(
+						stepGroup.steps,
+						this[runStep].bind(this),
+						(error) => {
+							done(error);
+						}
+					);
+			}
+		}, (error) => {
+			if (!error) {
+				extraStepCount = this.steps.length - initialStepCount;
+				if (extraStepCount > 0) {
+					this[runSteps](callback, extraStepCount);
+				} else {
+					if (callback) {	callback();	}
+				}
 			} else {
-				callback();
+				if (callback) {	callback(error); }
 			}
 		});
 	}
 
-	results(callback) {
-		this.runSteps(callback);
-	}
-
-	[createStepTask](step) {
-		return (done) => {
-			const stepArguments = this.parameters.concat([done]);
-			step.call(this, ...stepArguments);
-		};
+	[runStep](step, done) {
+		const parameters = privateData(this).parameters;
+		const stepArguments = parameters.concat([done]);
+		step.call(this, ...stepArguments);
 	}
 }

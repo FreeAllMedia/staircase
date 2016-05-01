@@ -155,6 +155,16 @@ describe("Staircase(...options)", () => {
 			actualStepResults.should.eql(expectedStepResults);
 		});
 
+		it("should return nothing if no error occurs", done => {
+			staircase
+				.series(stepOne, stepTwo, stepThree)
+				.results();
+
+			clock.tick(350);
+
+			done();
+		});
+
 		it("should return the step error if it occurs", done => {
 			const error = new Error();
 
