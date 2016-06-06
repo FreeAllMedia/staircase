@@ -8,8 +8,19 @@ export default class Staircase {
 	constructor(...parameters) {
 		const _ = privateData(this);
 		_.parameters = parameters;
+		_.context = this;
 
 		this.steps = [];
+	}
+
+	context(newContext) {
+		const _ = privateData(this);
+		if (newContext) {
+			_.context = newContext;
+			return this;
+		} else {
+			return _.context;
+		}
 	}
 
 	get parameters() {
@@ -78,8 +89,9 @@ export default class Staircase {
 	}
 
 	[runStep](step, done) {
-		const parameters = privateData(this).parameters;
+		const _ = privateData(this);
+		const parameters = _.parameters;
 		const stepArguments = parameters.concat([done]);
-		step.call(this, ...stepArguments);
+		step.call(_.context, ...stepArguments);
 	}
 }

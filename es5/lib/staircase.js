@@ -34,11 +34,23 @@ var Staircase = function () {
 		}
 
 		_.parameters = parameters;
+		_.context = this;
 
 		this.steps = [];
 	}
 
 	_createClass(Staircase, [{
+		key: "context",
+		value: function context(newContext) {
+			var _ = (0, _incognito2.default)(this);
+			if (newContext) {
+				_.context = newContext;
+				return this;
+			} else {
+				return _.context;
+			}
+		}
+	}, {
 		key: "step",
 		value: function step(newStep) {
 			this.series(newStep);
@@ -115,9 +127,10 @@ var Staircase = function () {
 	}, {
 		key: runStep,
 		value: function value(step, done) {
-			var parameters = (0, _incognito2.default)(this).parameters;
+			var _ = (0, _incognito2.default)(this);
+			var parameters = _.parameters;
 			var stepArguments = parameters.concat([done]);
-			step.call.apply(step, [this].concat(_toConsumableArray(stepArguments)));
+			step.call.apply(step, [_.context].concat(_toConsumableArray(stepArguments)));
 		}
 	}, {
 		key: "parameters",
