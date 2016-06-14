@@ -94,17 +94,34 @@ var Staircase = function () {
 
 			var extraStepCount = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
 
-			var steps = this.steps.slice(-extraStepCount);
+			var _ = (0, _incognito2.default)(this);
+
+			var stepGroups = this.steps.slice(-extraStepCount);
 
 			var initialStepCount = this.steps.length;
 
-			_flowsync2.default.mapSeries(steps, function (stepGroup, done) {
+			_flowsync2.default.mapSeries(stepGroups, function (stepGroup, done) {
+
+				var contextObject = _.context;
+
+				var steps = stepGroup.steps;
+
+				var lastStep = steps[steps.length - 1];
+
+				if (typeof lastStep !== "function") {
+					contextObject = steps.pop();
+				}
+
+				steps = steps.map(function (step) {
+					return [step, contextObject];
+				});
+
 				switch (stepGroup.concurrency) {
 					case "series":
-						_flowsync2.default.mapSeries(stepGroup.steps, _this[runStep].bind(_this), done);
+						_flowsync2.default.mapSeries(steps, _this[runStep].bind(_this), done);
 						break;
 					case "parallel":
-						_flowsync2.default.mapParallel(stepGroup.steps, _this[runStep].bind(_this), done);
+						_flowsync2.default.mapParallel(steps, _this[runStep].bind(_this), done);
 				}
 			}, function (error, data) {
 				if (!error) {
@@ -126,11 +143,14 @@ var Staircase = function () {
 		}
 	}, {
 		key: runStep,
-		value: function value(step, done) {
+		value: function value(stepAndContext, done) {
+			var step = stepAndContext[0];
+			var context = stepAndContext[1];
+
 			var _ = (0, _incognito2.default)(this);
-			var parameters = _.parameters;
-			var stepArguments = parameters.concat([done]);
-			step.call.apply(step, [_.context].concat(_toConsumableArray(stepArguments)));
+			var stepArguments = _.parameters.concat([done]);
+
+			step.call.apply(step, [context].concat(_toConsumableArray(stepArguments)));
 		}
 	}, {
 		key: "parameters",

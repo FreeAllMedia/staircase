@@ -25,6 +25,7 @@ describe("Staircase(...options)", () => {
 				stepThree;
 
 		function mockStepFunction(argumentOne, argumentTwo, argumentThree, stepDone) {
+			this.context = this;
 			setTimeout(() => {
 				stepDone(null, 9);
 			}, 100);
@@ -211,6 +212,18 @@ describe("Staircase(...options)", () => {
 				.results(callback);
 
 			clock.tick(250);
+		});
+
+		it("should use a provided context object when provided as the last argument", done => {
+			const contextObject = {};
+			staircase
+				.series(stepOne, stepTwo, stepThree, contextObject)
+				.results(error => {
+					contextObject.context.should.eql(contextObject);
+					done(error);
+				});
+
+			clock.tick(350);
 		});
 	});
 });
