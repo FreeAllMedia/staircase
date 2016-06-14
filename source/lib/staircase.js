@@ -53,22 +53,39 @@ export default class Staircase {
 	}
 
 	[runSteps](callback, extraStepCount = 0) {
-		const steps = this.steps.slice(-extraStepCount);
+		const _ = privateData(this);
+
+		const stepGroups = this.steps.slice(-extraStepCount);
 
 		const initialStepCount = this.steps.length;
 
-		Async.mapSeries(steps, (stepGroup, done) => {
+		Async.mapSeries(stepGroups, (stepGroup, done) => {
+
+			let contextObject = _.context;
+
+			let steps = stepGroup.steps;
+
+			const lastStep = steps[steps.length - 1];
+
+			if (typeof lastStep !== "function") {
+				contextObject = steps.pop();
+			}
+
+			steps = steps.map(step => {
+				return [step, contextObject];
+			});
+
 			switch (stepGroup.concurrency) {
 				case "series":
 					Async.mapSeries(
-						stepGroup.steps,
+						steps,
 						this[runStep].bind(this),
 						done
 					);
 					break;
 				case "parallel":
 					Async.mapParallel(
-						stepGroup.steps,
+						steps,
 						this[runStep].bind(this),
 						done
 					);
@@ -88,10 +105,13 @@ export default class Staircase {
 		});
 	}
 
-	[runStep](step, done) {
+	[runStep](stepAndContext, done) {
+		const step = stepAndContext[0];
+		const context = stepAndContext[1];
+
 		const _ = privateData(this);
-		const parameters = _.parameters;
-		const stepArguments = parameters.concat([done]);
-		step.call(_.context, ...stepArguments);
+		const stepArguments = _.parameters.concat([done]);
+
+		step.call(context, ...stepArguments);
 	}
 }
