@@ -53,8 +53,13 @@ var Staircase = function () {
 	}, {
 		key: "after",
 		value: function after(targetStep) {
-			(0, _incognito2.default)(this).after = targetStep;
-			return this;
+			var _ = (0, _incognito2.default)(this);
+			if (targetStep) {
+				_.after = targetStep;
+				return this;
+			} else {
+				return _.after;
+			}
 		}
 	}, {
 		key: "step",
@@ -69,17 +74,16 @@ var Staircase = function () {
 				steps[_key2] = arguments[_key2];
 			}
 
-			var step = {
-				concurrency: "series",
-				steps: steps
-			};
-
 			var _ = (0, _incognito2.default)(this);
 			if (_.after) {
-				var afterIndex = this.steps.indexOf(_.after);
-				this.steps.splice(afterIndex + 1, 0, step);
+				steps.forEach(function (step) {
+					_.after.steps.push(step);
+				});
 			} else {
-				this.steps.push(step);
+				this.steps.push({
+					concurrency: "series",
+					steps: steps
+				});
 			}
 
 			return this;
