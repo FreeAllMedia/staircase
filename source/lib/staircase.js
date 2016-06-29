@@ -23,8 +23,22 @@ export default class Staircase {
 		}
 	}
 
+	get lastStep() {
+		return this.steps[this.steps.length - 1];
+	}
+
 	get parameters() {
 		return privateData(this).parameters;
+	}
+
+	get append() {
+		privateData(this).after = null;
+		return this;
+	}
+
+	after(targetStep) {
+		privateData(this).after = targetStep;
+		return this;
 	}
 
 	step(newStep) {
@@ -33,10 +47,19 @@ export default class Staircase {
 	}
 
 	series(...steps) {
-		this.steps.push({
+		const step = {
 			concurrency: "series",
 			steps: steps
-		});
+		};
+
+		const _ = privateData(this);
+		if (_.after) {
+			const afterIndex = this.steps.indexOf(_.after);
+			this.steps.splice(afterIndex + 1, 0, step);
+		} else {
+			this.steps.push(step);
+		}
+
 		return this;
 	}
 
