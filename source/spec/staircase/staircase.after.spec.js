@@ -26,6 +26,12 @@ describe("staircase.after(step)", () => {
 		staircase.after(targetStep).should.eql(staircase);
 	});
 
+	it("should return the target step when called without arguments", () => {
+		staircase
+		.after(targetStep)
+		.after().should.eql(targetStep);
+	});
+
 	it("should insert each subsequent step after the target step", done => {
 		staircase
 		.after(targetStep)

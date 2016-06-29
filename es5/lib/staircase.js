@@ -53,8 +53,13 @@ var Staircase = function () {
 	}, {
 		key: "after",
 		value: function after(targetStep) {
-			(0, _incognito2.default)(this).after = targetStep;
-			return this;
+			var _ = (0, _incognito2.default)(this);
+			if (targetStep) {
+				_.after = targetStep;
+				return this;
+			} else {
+				return _.after;
+			}
 		}
 	}, {
 		key: "step",

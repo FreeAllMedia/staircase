@@ -37,8 +37,13 @@ export default class Staircase {
 	}
 
 	after(targetStep) {
-		privateData(this).after = targetStep;
-		return this;
+		const _ = privateData(this);
+		if (targetStep) {
+			_.after = targetStep;
+			return this;
+		} else {
+			return _.after;
+		}
 	}
 
 	step(newStep) {
