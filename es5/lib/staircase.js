@@ -51,6 +51,12 @@ var Staircase = function () {
 			}
 		}
 	}, {
+		key: "after",
+		value: function after(targetStep) {
+			(0, _incognito2.default)(this).after = targetStep;
+			return this;
+		}
+	}, {
 		key: "step",
 		value: function step(newStep) {
 			this.series(newStep);
@@ -63,10 +69,19 @@ var Staircase = function () {
 				steps[_key2] = arguments[_key2];
 			}
 
-			this.steps.push({
+			var step = {
 				concurrency: "series",
 				steps: steps
-			});
+			};
+
+			var _ = (0, _incognito2.default)(this);
+			if (_.after) {
+				var afterIndex = this.steps.indexOf(_.after);
+				this.steps.splice(afterIndex + 1, 0, step);
+			} else {
+				this.steps.push(step);
+			}
+
 			return this;
 		}
 	}, {
@@ -153,9 +168,20 @@ var Staircase = function () {
 			step.call.apply(step, [context].concat(_toConsumableArray(stepArguments)));
 		}
 	}, {
+		key: "lastStep",
+		get: function get() {
+			return this.steps[this.steps.length - 1];
+		}
+	}, {
 		key: "parameters",
 		get: function get() {
 			return (0, _incognito2.default)(this).parameters;
+		}
+	}, {
+		key: "append",
+		get: function get() {
+			(0, _incognito2.default)(this).after = null;
+			return this;
 		}
 	}]);
 
