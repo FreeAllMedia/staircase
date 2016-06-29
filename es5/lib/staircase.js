@@ -74,17 +74,16 @@ var Staircase = function () {
 				steps[_key2] = arguments[_key2];
 			}
 
-			var step = {
-				concurrency: "series",
-				steps: steps
-			};
-
 			var _ = (0, _incognito2.default)(this);
 			if (_.after) {
-				var afterIndex = this.steps.indexOf(_.after);
-				this.steps.splice(afterIndex + 1, 0, step);
+				steps.forEach(function (step) {
+					_.after.steps.push(step);
+				});
 			} else {
-				this.steps.push(step);
+				this.steps.push({
+					concurrency: "series",
+					steps: steps
+				});
 			}
 
 			return this;

@@ -18,8 +18,6 @@ describe("staircase.after(step)", () => {
 		stepFour = sinon.spy(function four(done){ done(); });
 
 		targetStep = staircase.step(stepOne).lastStep;
-
-		staircase.step(stepThree);
 	});
 
 	it("should return itself to enable chaining", () => {
@@ -34,16 +32,19 @@ describe("staircase.after(step)", () => {
 
 	it("should insert each subsequent step after the target step", done => {
 		staircase
+		.step(stepFour)
 		.after(targetStep)
-		.step(stepTwo)
+			.step(stepTwo)
+			.step(stepThree)
 		.results(error => {
-			sinon.assert.callOrder(stepOne, stepTwo, stepThree);
+			sinon.assert.callOrder(stepOne, stepTwo, stepThree, stepFour);
 			done(error);
 		});
 	});
 
 	it("should stop inserting each subsequent step after the target step after .append is called", done => {
 		staircase
+		.step(stepThree)
 		.after(targetStep)
 			.step(stepTwo)
 		.append
