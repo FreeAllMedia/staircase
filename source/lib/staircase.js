@@ -9,6 +9,7 @@ export default class Staircase {
 		const _ = privateData(this);
 		_.parameters = parameters;
 		_.context = this;
+		_.currentStep = null;
 
 		this.steps = [];
 	}
@@ -21,6 +22,10 @@ export default class Staircase {
 		} else {
 			return _.context;
 		}
+	}
+
+	get currentStep() {
+		return privateData(this).currentStep;
 	}
 
 	get lastStep() {
@@ -99,7 +104,7 @@ export default class Staircase {
 			}
 
 			steps = steps.map(step => {
-				return [step, contextObject];
+				return [step, contextObject, stepGroup];
 			});
 
 			switch (stepGroup.concurrency) {
@@ -132,12 +137,21 @@ export default class Staircase {
 		});
 	}
 
-	[runStep](stepAndContext, done) {
-		const step = stepAndContext[0];
-		const context = stepAndContext[1];
+	[runStep](stepData, done) {
+		const step = stepData[0];
+		const context = stepData[1];
+		const stepGroup = stepData[2];
 
 		const _ = privateData(this);
-		const stepArguments = _.parameters.concat([done]);
+
+		function clearCurrentStep(error, data) {
+			_.currentStep = null;
+			done(error, data);
+		}
+
+		const stepArguments = _.parameters.concat([clearCurrentStep]);
+
+		_.currentStep = stepGroup;
 
 		step.call(context, ...stepArguments);
 	}

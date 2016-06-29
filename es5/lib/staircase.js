@@ -35,6 +35,7 @@ var Staircase = function () {
 
 		_.parameters = parameters;
 		_.context = this;
+		_.currentStep = null;
 
 		this.steps = [];
 	}
@@ -132,7 +133,7 @@ var Staircase = function () {
 				}
 
 				steps = steps.map(function (step) {
-					return [step, contextObject];
+					return [step, contextObject, stepGroup];
 				});
 
 				switch (stepGroup.concurrency) {
@@ -162,14 +163,28 @@ var Staircase = function () {
 		}
 	}, {
 		key: runStep,
-		value: function value(stepAndContext, done) {
-			var step = stepAndContext[0];
-			var context = stepAndContext[1];
+		value: function value(stepData, done) {
+			var step = stepData[0];
+			var context = stepData[1];
+			var stepGroup = stepData[2];
 
 			var _ = (0, _incognito2.default)(this);
-			var stepArguments = _.parameters.concat([done]);
+
+			function clearCurrentStep(error, data) {
+				_.currentStep = null;
+				done(error, data);
+			}
+
+			var stepArguments = _.parameters.concat([clearCurrentStep]);
+
+			_.currentStep = stepGroup;
 
 			step.call.apply(step, [context].concat(_toConsumableArray(stepArguments)));
+		}
+	}, {
+		key: "currentStep",
+		get: function get() {
+			return (0, _incognito2.default)(this).currentStep;
 		}
 	}, {
 		key: "lastStep",
