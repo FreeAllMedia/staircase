@@ -1,7 +1,9 @@
 import privateData from "incognito";
 import Async from "flowsync";
 
-const runStep = Symbol(),
+const setupStepGroup = Symbol(),
+			addStep = Symbol(),
+			runStep = Symbol(),
 			runSteps = Symbol();
 
 export default class Staircase {
@@ -10,6 +12,8 @@ export default class Staircase {
 		_.parameters = parameters;
 		_.context = this;
 		_.currentStep = null;
+		_.index = 0;
+		_.stepIndex = 0;
 
 		this.steps = [];
 	}
@@ -57,17 +61,10 @@ export default class Staircase {
 	}
 
 	series(...steps) {
-		const _ = privateData(this);
-		if (_.after) {
-			steps.forEach(step => {
-				_.after.steps.push(step);
-			});
-		} else {
-			this.steps.push({
-				concurrency: "series",
-				steps: steps
-			});
-		}
+		this[addStep]({
+			concurrency: "series",
+			steps: steps
+		});
 
 		return this;
 	}
@@ -81,60 +78,66 @@ export default class Staircase {
 	}
 
 	results(callback) {
+
 		this[runSteps](callback);
 	}
 
-	[runSteps](callback, extraStepCount = 0) {
-		const _ = privateData(this);
+	[runSteps](callback, stepIndex = 0, data = []) {
+		const stepGroup = this.steps[stepIndex];
 
-		const stepGroups = this.steps.slice(-extraStepCount);
-
-		const initialStepCount = this.steps.length;
-
-		Async.mapSeries(stepGroups, (stepGroup, done) => {
-
-			let contextObject = _.context;
-
-			let steps = stepGroup.steps;
-
-			const lastStep = steps[steps.length - 1];
-
-			if (typeof lastStep !== "function") {
-				contextObject = steps.pop();
-			}
-
-			steps = steps.map(step => {
-				return [step, contextObject, stepGroup];
-			});
-
-			switch (stepGroup.concurrency) {
-				case "series":
-					Async.mapSeries(
-						steps,
-						this[runStep].bind(this),
-						done
-					);
-					break;
-				case "parallel":
-					Async.mapParallel(
-						steps,
-						this[runStep].bind(this),
-						done
-					);
-			}
-		}, (error, data) => {
-			if (!error) {
-				extraStepCount = this.steps.length - initialStepCount;
-				if (extraStepCount > 0) {
-					this[runSteps](callback, extraStepCount);
-				} else {
-					const flattenedData = [].concat.apply([], data);
-					if (callback) {	callback(null, flattenedData);	}
-				}
+		this[setupStepGroup](stepGroup, (error, newData) => {
+			data.push(newData);
+			if (error) {
+				finished(error);
 			} else {
-				if (callback) {	callback(error); }
+				if (this.steps.length - 1 > stepIndex) {
+					this[runSteps](callback, stepIndex + 1, data);
+				} else {
+					finished(null, data);
+				}
 			}
 		});
+
+		function finished(error, finishedData) {
+			if (callback) {
+				const flattenedData = [].concat.apply([], finishedData);
+				callback(error, flattenedData);
+			}
+		}
+	}
+
+	[setupStepGroup](stepGroup, done) {
+		const _ = privateData(this);
+
+		let contextObject = _.context;
+
+		let steps = stepGroup.steps;
+
+		const lastStep = steps[steps.length - 1];
+
+		if (typeof lastStep !== "function") {
+			contextObject = steps.pop();
+		}
+
+		steps = steps.map(step => {
+			return [step, contextObject, stepGroup];
+		});
+
+		switch (stepGroup.concurrency) {
+			case "series":
+				Async.mapSeries(
+					steps,
+					this[runStep].bind(this),
+					done
+				);
+				break;
+			case "parallel":
+				Async.mapParallel(
+					steps,
+					this[runStep].bind(this),
+					done
+				);
+		}
 	}
 
 	[runStep](stepData, done) {
@@ -144,15 +147,37 @@ export default class Staircase {
 
 		const _ = privateData(this);
 
+		const originalAfter = _.after;
+
 		function clearCurrentStep(error, data) {
 			_.currentStep = null;
+			_.after = originalAfter;
+
 			done(error, data);
 		}
 
 		const stepArguments = _.parameters.concat([clearCurrentStep]);
 
 		_.currentStep = stepGroup;
+		_.after = _.currentStep;
 
 		step.call(context, ...stepArguments);
+	}
+
+	[addStep](step) {
+		const _ = privateData(this);
+
+		step.index = _.index;
+		_.index += 1;
+
+		if (_.after) {
+			const afterIndex = this.steps.indexOf(_.after) + 1;
+
+			this.steps.splice(afterIndex, 0, step);
+			_.after = step;
+		} else {
+			_.after = step;
+			this.steps.push(step);
+		}
 	}
 }
