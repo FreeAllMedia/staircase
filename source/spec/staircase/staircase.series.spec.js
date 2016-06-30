@@ -33,7 +33,7 @@ describe("Staircase(...options)", () => {
 
 		it("should add the step functions to steps as a series", () => {
 			staircase.steps.should.eql([
-				{concurrency: "series", steps: stepFunctions}
+				{index: 0, concurrency: "series", steps: stepFunctions}
 			]);
 		});
 	});

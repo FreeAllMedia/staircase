@@ -35,7 +35,10 @@ describe("staircase.after(step)", () => {
 		.step(stepFour)
 		.after(targetStep)
 			.step(stepTwo)
-			.step(stepThree)
+			.step(stepDone => {
+				staircase.step(stepThree);
+				stepDone();
+			})
 		.results(error => {
 			sinon.assert.callOrder(stepOne, stepTwo, stepThree, stepFour);
 			done(error);

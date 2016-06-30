@@ -20,7 +20,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var runStep = Symbol(),
+var setupStepGroup = Symbol(),
+    addStep = Symbol(),
+    runStep = Symbol(),
     runSteps = Symbol();
 
 var Staircase = function () {
@@ -36,6 +38,8 @@ var Staircase = function () {
 		_.parameters = parameters;
 		_.context = this;
 		_.currentStep = null;
+		_.index = 0;
+		_.stepIndex = 0;
 
 		this.steps = [];
 	}
@@ -75,17 +79,10 @@ var Staircase = function () {
 				steps[_key2] = arguments[_key2];
 			}
 
-			var _ = (0, _incognito2.default)(this);
-			if (_.after) {
-				steps.forEach(function (step) {
-					_.after.steps.push(step);
-				});
-			} else {
-				this.steps.push({
-					concurrency: "series",
-					steps: steps
-				});
-			}
+			this[addStep]({
+				concurrency: "series",
+				steps: steps
+			});
 
 			return this;
 		}
@@ -105,6 +102,7 @@ var Staircase = function () {
 	}, {
 		key: "results",
 		value: function results(callback) {
+
 			this[runSteps](callback);
 		}
 	}, {
@@ -112,54 +110,57 @@ var Staircase = function () {
 		value: function value(callback) {
 			var _this = this;
 
-			var extraStepCount = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+			var stepIndex = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+			var data = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
 
-			var _ = (0, _incognito2.default)(this);
+			var stepGroup = this.steps[stepIndex];
 
-			var stepGroups = this.steps.slice(-extraStepCount);
-
-			var initialStepCount = this.steps.length;
-
-			_flowsync2.default.mapSeries(stepGroups, function (stepGroup, done) {
-
-				var contextObject = _.context;
-
-				var steps = stepGroup.steps;
-
-				var lastStep = steps[steps.length - 1];
-
-				if (typeof lastStep !== "function") {
-					contextObject = steps.pop();
-				}
-
-				steps = steps.map(function (step) {
-					return [step, contextObject, stepGroup];
-				});
-
-				switch (stepGroup.concurrency) {
-					case "series":
-						_flowsync2.default.mapSeries(steps, _this[runStep].bind(_this), done);
-						break;
-					case "parallel":
-						_flowsync2.default.mapParallel(steps, _this[runStep].bind(_this), done);
-				}
-			}, function (error, data) {
-				if (!error) {
-					extraStepCount = _this.steps.length - initialStepCount;
-					if (extraStepCount > 0) {
-						_this[runSteps](callback, extraStepCount);
-					} else {
-						var flattenedData = [].concat.apply([], data);
-						if (callback) {
-							callback(null, flattenedData);
-						}
-					}
+			this[setupStepGroup](stepGroup, function (error, newData) {
+				data.push(newData);
+				if (error) {
+					finished(error);
 				} else {
-					if (callback) {
-						callback(error);
+					if (_this.steps.length - 1 > stepIndex) {
+						_this[runSteps](callback, stepIndex + 1, data);
+					} else {
+						finished(null, data);
 					}
 				}
 			});
+
+			function finished(error, finishedData) {
+				if (callback) {
+					var flattenedData = [].concat.apply([], finishedData);
+					callback(error, flattenedData);
+				}
+			}
+		}
+	}, {
+		key: setupStepGroup,
+		value: function value(stepGroup, done) {
+			var _ = (0, _incognito2.default)(this);
+
+			var contextObject = _.context;
+
+			var steps = stepGroup.steps;
+
+			var lastStep = steps[steps.length - 1];
+
+			if (typeof lastStep !== "function") {
+				contextObject = steps.pop();
+			}
+
+			steps = steps.map(function (step) {
+				return [step, contextObject, stepGroup];
+			});
+
+			switch (stepGroup.concurrency) {
+				case "series":
+					_flowsync2.default.mapSeries(steps, this[runStep].bind(this), done);
+					break;
+				case "parallel":
+					_flowsync2.default.mapParallel(steps, this[runStep].bind(this), done);
+			}
 		}
 	}, {
 		key: runStep,
@@ -170,16 +171,39 @@ var Staircase = function () {
 
 			var _ = (0, _incognito2.default)(this);
 
+			var originalAfter = _.after;
+
 			function clearCurrentStep(error, data) {
 				_.currentStep = null;
+				_.after = originalAfter;
+
 				done(error, data);
 			}
 
 			var stepArguments = _.parameters.concat([clearCurrentStep]);
 
 			_.currentStep = stepGroup;
+			_.after = _.currentStep;
 
 			step.call.apply(step, [context].concat(_toConsumableArray(stepArguments)));
+		}
+	}, {
+		key: addStep,
+		value: function value(step) {
+			var _ = (0, _incognito2.default)(this);
+
+			step.index = _.index;
+			_.index += 1;
+
+			if (_.after) {
+				var afterIndex = this.steps.indexOf(_.after) + 1;
+
+				this.steps.splice(afterIndex, 0, step);
+				_.after = step;
+			} else {
+				_.after = step;
+				this.steps.push(step);
+			}
 		}
 	}, {
 		key: "currentStep",
