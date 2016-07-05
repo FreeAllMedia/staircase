@@ -102,7 +102,6 @@ var Staircase = function () {
 	}, {
 		key: "results",
 		value: function results(callback) {
-
 			this[runSteps](callback);
 		}
 	}, {
@@ -114,19 +113,24 @@ var Staircase = function () {
 			var data = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
 
 			var stepGroup = this.steps[stepIndex];
-
-			this[setupStepGroup](stepGroup, function (error, newData) {
-				data.push(newData);
-				if (error) {
-					finished(error);
-				} else {
-					if (_this.steps.length - 1 > stepIndex) {
-						_this[runSteps](callback, stepIndex + 1, data);
+			if (stepGroup) {
+				this[setupStepGroup](stepGroup, function (error, newData) {
+					data.push(newData);
+					if (error) {
+						finished(error);
 					} else {
-						finished(null, data);
+
+						if (_this.steps.length - 1 > stepIndex) {
+
+							_this[runSteps](callback, stepIndex + 1, data);
+						} else {
+							finished(null, data);
+						}
 					}
-				}
-			});
+				});
+			} else {
+				finished(null);
+			}
 
 			function finished(error, finishedData) {
 				if (callback) {

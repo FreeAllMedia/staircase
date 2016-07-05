@@ -15,6 +15,8 @@ export default class Staircase {
 		_.index = 0;
 		_.stepIndex = 0;
 
+
+
 		this.steps = [];
 	}
 
@@ -78,25 +80,30 @@ export default class Staircase {
 	}
 
 	results(callback) {
-
 		this[runSteps](callback);
 	}
 
 	[runSteps](callback, stepIndex = 0, data = []) {
 		const stepGroup = this.steps[stepIndex];
-
-		this[setupStepGroup](stepGroup, (error, newData) => {
-			data.push(newData);
-			if (error) {
-				finished(error);
-			} else {
-				if (this.steps.length - 1 > stepIndex) {
-					this[runSteps](callback, stepIndex + 1, data);
+		if (stepGroup) {
+			this[setupStepGroup](stepGroup, (error, newData) => {
+				data.push(newData);
+				if (error) {
+					finished(error);
 				} else {
-					finished(null, data);
+
+					if (this.steps.length - 1 > stepIndex) {
+
+						this[runSteps](callback, stepIndex + 1, data);
+					} else {
+						finished(null, data);
+					}
 				}
-			}
-		});
+
+			});
+		} else {
+			finished(null);
+		}
 
 		function finished(error, finishedData) {
 			if (callback) {
