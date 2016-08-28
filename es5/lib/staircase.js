@@ -93,7 +93,7 @@ var Staircase = function () {
 				steps[_key3] = arguments[_key3];
 			}
 
-			this.steps.push({
+			this[addStep]({
 				concurrency: "parallel",
 				steps: steps
 			});
@@ -196,7 +196,7 @@ var Staircase = function () {
 		value: function value(step) {
 			var _ = (0, _incognito2.default)(this);
 
-			step.index = _.index;
+			//step.index = _.index;
 			_.index += 1;
 
 			if (_.after) {

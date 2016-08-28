@@ -1,33 +1,29 @@
 import Staircase from "../../lib/staircase.js";
 import sinon from "sinon";
 
-describe("Staircase(...options)", () => {
+describe("staircase.step(stepFunction)", () => {
 	let staircase,
-			parameters;
+			parameters,
+			stepFunction,
+			returnValue;
 
 	beforeEach(() => {
 		parameters = [1, 2, 3];
+
 		staircase = new Staircase(...parameters);
+
+		stepFunction = sinon.spy();
+
+		returnValue = staircase.step(stepFunction);
 	});
 
-	describe(".step(stepFunction)", () => {
-		let stepFunction,
-				returnValue;
+	it("should return the object instance to enable chaining", () => {
+		returnValue.should.eql(staircase);
+	});
 
-		beforeEach(() => {
-			stepFunction = sinon.spy();
-
-			returnValue = staircase.step(stepFunction);
-		});
-
-		it("should return the object instance to enable chaining", () => {
-			returnValue.should.eql(staircase);
-		});
-
-		it("should add the step function to steps as a series", () => {
-			staircase.steps.should.eql([
-				{index: 0, concurrency: "series", steps: [stepFunction]}
-			]);
-		});
+	it("should add the step function to steps as a series", () => {
+		staircase.steps.should.eql([
+			{concurrency: "series", steps: [stepFunction]}
+		]);
 	});
 });

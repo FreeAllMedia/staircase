@@ -1,40 +1,36 @@
 import Staircase from "../../lib/staircase.js";
 import sinon from "sinon";
 
-describe("Staircase(...options)", () => {
+describe("staircase.series(...stepFunctions)", () => {
 	let staircase,
-			parameters;
+			parameters,
+			stepFunctions,
+			stepOne,
+			stepTwo,
+			stepThree,
+			returnValue;
 
 	beforeEach(() => {
 		parameters = [1, 2, 3];
+
 		staircase = new Staircase(...parameters);
+
+		stepOne = sinon.spy();
+		stepTwo = sinon.spy();
+		stepThree = sinon.spy();
+
+		stepFunctions = [stepOne, stepTwo, stepThree];
+
+		returnValue = staircase.series(...stepFunctions);
 	});
 
-	describe(".series(...stepFunctions)", () => {
-		let stepFunctions,
-				stepOne,
-				stepTwo,
-				stepThree,
-				returnValue;
+	it("should return the object instance to enable chaining", () => {
+		returnValue.should.eql(staircase);
+	});
 
-		beforeEach(() => {
-			stepOne = sinon.spy();
-			stepTwo = sinon.spy();
-			stepThree = sinon.spy();
-
-			stepFunctions = [stepOne, stepTwo, stepThree];
-
-			returnValue = staircase.series(...stepFunctions);
-		});
-
-		it("should return the object instance to enable chaining", () => {
-			returnValue.should.eql(staircase);
-		});
-
-		it("should add the step functions to steps as a series", () => {
-			staircase.steps.should.eql([
-				{index: 0, concurrency: "series", steps: stepFunctions}
-			]);
-		});
+	it("should add the step functions to steps as a series", () => {
+		staircase.steps.should.eql([
+			{concurrency: "series", steps: stepFunctions}
+		]);
 	});
 });

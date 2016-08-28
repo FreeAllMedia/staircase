@@ -72,7 +72,7 @@ export default class Staircase {
 	}
 
 	parallel(...steps) {
-		this.steps.push({
+		this[addStep]({
 			concurrency: "parallel",
 			steps: steps
 		});
@@ -99,7 +99,6 @@ export default class Staircase {
 						finished(null, data);
 					}
 				}
-
 			});
 		} else {
 			finished(null);
@@ -174,7 +173,7 @@ export default class Staircase {
 	[addStep](step) {
 		const _ = privateData(this);
 
-		step.index = _.index;
+		//step.index = _.index;
 		_.index += 1;
 
 		if (_.after) {
