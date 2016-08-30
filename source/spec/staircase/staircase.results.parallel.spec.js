@@ -37,10 +37,6 @@ describe("Staircase(...options)", () => {
 			stepThree = sinon.spy(mockStepFunction);
 		});
 
-		it("should return itself to enable chaining", () => {
-			staircase.parallel(stepOne, stepTwo, stepThree).should.eql(staircase);
-		});
-
 		it("should return an array of all data returned by the step functions", done => {
 			staircase
 				.parallel(stepOne, stepTwo, stepThree)

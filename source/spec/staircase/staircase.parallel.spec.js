@@ -1,7 +1,7 @@
 import Staircase from "../../lib/staircase.js";
 import StepGroupSetter from "../../lib/stepGroupSetter.js";
 
-describe("staircase.series(...steps)", () => {
+describe("staircase.parallel(...steps)", () => {
 	let staircase,
 			parameters,
 			steps;
@@ -20,16 +20,16 @@ describe("staircase.series(...steps)", () => {
 
 	it("should return a StepGroupSetter instance", () => {
 		staircase
-			.series(...steps)
+			.parallel(...steps)
 				.should.be.instanceOf(StepGroupSetter);
 	});
 
-	it("should add the step functions to steps as a series", () => {
+	it("should add the step functions to steps as a parallel", () => {
 		staircase
-			.series(...steps)
+			.parallel(...steps)
 			.stepGroups()
 				.should.eql([
-					{ type: "series", steps: steps }
+					{ type: "parallel", steps: steps }
 				]);
 	});
 });

@@ -1,23 +1,35 @@
+
 import privateData from "incognito";
 import Async from "flowsync";
+import Component from "mrt";
+
+import StepGroupSetter from "./stepGroupSetter.js";
 
 const setupStepGroup = Symbol(),
-			addStep = Symbol(),
 			runStep = Symbol(),
-			runSteps = Symbol();
+			runSteps = Symbol(),
+			reorderStepGroup = Symbol();
 
-export default class Staircase {
-	constructor(...parameters) {
+export default class Staircase extends Component {
+	initialize(...initialArguments) {
 		const _ = privateData(this);
-		_.parameters = parameters;
+
 		_.context = this;
 		_.currentStep = null;
-		_.index = 0;
 		_.stepIndex = 0;
 
+		this.link("series", StepGroupSetter).apply(this, "series");
+		this.link("parallel", StepGroupSetter).apply(this, "parallel");
 
+		this.properties(
+			"arguments"
+		).multi.aggregate.flat;
 
-		this.steps = [];
+		this.properties("stepGroups")
+			.multi.aggregate.flat
+			.then(this[reorderStepGroup]);
+
+		this.arguments(...initialArguments);
 	}
 
 	context(newContext) {
@@ -35,11 +47,8 @@ export default class Staircase {
 	}
 
 	get lastStep() {
-		return this.steps[this.steps.length - 1];
-	}
-
-	get parameters() {
-		return privateData(this).parameters;
+		const stepGroups = this.stepGroups();
+		return stepGroups[stepGroups.length - 1];
 	}
 
 	get append() {
@@ -58,24 +67,11 @@ export default class Staircase {
 	}
 
 	step(newStep) {
-		this.series(newStep);
-		return this;
-	}
-
-	series(...steps) {
-		this[addStep]({
-			concurrency: "series",
-			steps: steps
+		this.stepGroups({
+			type: "series",
+			steps: [ newStep ]
 		});
 
-		return this;
-	}
-
-	parallel(...steps) {
-		this[addStep]({
-			concurrency: "parallel",
-			steps: steps
-		});
 		return this;
 	}
 
@@ -83,17 +79,21 @@ export default class Staircase {
 		this[runSteps](callback);
 	}
 
+	/**
+	 * Steps
+	 */
+
 	[runSteps](callback, stepIndex = 0, data = []) {
-		const stepGroup = this.steps[stepIndex];
+		const stepGroups = this.stepGroups();
+		const stepGroup = stepGroups[stepIndex];
+
 		if (stepGroup) {
 			this[setupStepGroup](stepGroup, (error, newData) => {
 				data.push(newData);
 				if (error) {
 					finished(error);
 				} else {
-
-					if (this.steps.length - 1 > stepIndex) {
-
+					if (this.stepGroups().length - 1 > stepIndex) {
 						this[runSteps](callback, stepIndex + 1, data);
 					} else {
 						finished(null, data);
@@ -109,40 +109,6 @@ export default class Staircase {
 				const flattenedData = [].concat.apply([], finishedData);
 				callback(error, flattenedData);
 			}
-		}
-	}
-
-	[setupStepGroup](stepGroup, done) {
-		const _ = privateData(this);
-
-		let contextObject = _.context;
-
-		let steps = stepGroup.steps;
-
-		const lastStep = steps[steps.length - 1];
-
-		if (typeof lastStep !== "function") {
-			contextObject = steps.pop();
-		}
-
-		steps = steps.map(step => {
-			return [step, contextObject, stepGroup];
-		});
-
-		switch (stepGroup.concurrency) {
-			case "series":
-				Async.mapSeries(
-					steps,
-					this[runStep].bind(this),
-					done
-				);
-				break;
-			case "parallel":
-				Async.mapParallel(
-					steps,
-					this[runStep].bind(this),
-					done
-				);
 		}
 	}
 
@@ -162,7 +128,7 @@ export default class Staircase {
 			done(error, data);
 		}
 
-		const stepArguments = _.parameters.concat([clearCurrentStep]);
+		const stepArguments = this.arguments().concat([clearCurrentStep]);
 
 		_.currentStep = stepGroup;
 		_.after = _.currentStep;
@@ -170,20 +136,59 @@ export default class Staircase {
 		step.call(context, ...stepArguments);
 	}
 
-	[addStep](step) {
+	/**
+	 * Step Groups
+	 */
+
+	[setupStepGroup](stepGroup, done) {
 		const _ = privateData(this);
 
-		//step.index = _.index;
-		_.index += 1;
+		let contextObject = _.context;
+
+		let steps = stepGroup.steps;
+
+		const lastStep = steps[steps.length - 1];
+
+		if (typeof lastStep !== "function") {
+			contextObject = steps.pop();
+		}
+
+		steps = steps.map(step => {
+			return [step, contextObject, stepGroup];
+		});
+
+		switch (stepGroup.type) {
+			case "series":
+				Async.mapSeries(
+					steps,
+					this[runStep].bind(this),
+					done
+				);
+				break;
+			case "parallel":
+				Async.mapParallel(
+					steps,
+					this[runStep].bind(this),
+					done
+				);
+		}
+	}
+
+	[reorderStepGroup](stepGroup) {
+		const _ = privateData(this);
 
 		if (_.after) {
-			const afterIndex = this.steps.indexOf(_.after) + 1;
+			const stepGroups = this.stepGroups();
 
-			this.steps.splice(afterIndex, 0, step);
-			_.after = step;
-		} else {
-			_.after = step;
-			this.steps.push(step);
+			const originalIndex = stepGroups.indexOf(stepGroup);
+
+			stepGroups.splice(originalIndex, 1);
+
+			const afterIndex = stepGroups.indexOf(_.after) + 1;
+
+			stepGroups.splice(afterIndex, 0, stepGroup);
 		}
+
+		_.after = stepGroup;
 	}
 }
