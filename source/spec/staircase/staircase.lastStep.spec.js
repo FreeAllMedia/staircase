@@ -11,7 +11,8 @@ describe("staircase.lastStep", () => {
 	});
 
 	it("should return the last step in the staircase", () => {
-		const lastStep = staircase.steps[staircase.steps.length - 1];
+		const stepGroups = staircase.stepGroups();
+		const lastStep = stepGroups[stepGroups.length - 1];
 		staircase.lastStep.should.eql(lastStep);
 	});
 });

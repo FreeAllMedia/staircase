@@ -22,8 +22,8 @@ describe("staircase.step(stepFunction)", () => {
 	});
 
 	it("should add the step function to steps as a series", () => {
-		staircase.steps.should.eql([
-			{concurrency: "series", steps: [stepFunction]}
+		staircase.stepGroups().should.eql([
+			{type: "series", steps: [stepFunction]}
 		]);
 	});
 });

@@ -33,10 +33,6 @@ describe("staircase.results(callback) (series)", () => {
 		stepThree = sinon.spy(mockStepFunction);
 	});
 
-	it("should return itself to enable chaining", () => {
-		staircase.series(stepOne, stepTwo, stepThree).should.eql(staircase);
-	});
-
 	it("should return aggregated data from chained calls", done => {
 		staircase
 			.series(stepOne, stepTwo)
