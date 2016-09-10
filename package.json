@@ -39,6 +39,7 @@
     "babel-core": "^6.5.1",
     "babel-eslint": "^6.1.2",
     "babel-preset-es2015": "^6.5.0",
+    "browserify": "^13.1.0",
     "chai": "^3.0.0",
     "compare-version": "^0.1.2",
     "coveralls": "^2.11.2",
@@ -69,11 +70,12 @@
     "phantomjs": "^2.1.7",
     "run-sequence": "^1.1.5",
     "sinon": "^1.17.2",
-    "stream-buffers": "^3.0.0"
+    "stream-buffers": "^3.0.0",
+    "watchify": "^3.7.0"
   },
   "dependencies": {
     "flowsync": "^0.1.12",
     "incognito": "^0.1.4",
-    "mrt": "^0.4.5"
+    "mrt": "^0.4.6"
   }
 }
