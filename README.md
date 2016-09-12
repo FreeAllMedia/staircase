@@ -26,8 +26,6 @@ import {
 	closeConnections
 } from "./sharedSteps.js";
 
-
-
 /**
  * Any arguments sent to the constructor are also sent
  * to each step function before the callback argument
@@ -77,6 +75,48 @@ action
  *
  * data returned by the steps will be available in the `data` argument as an array of values.
  */
+action
+	.results((error, data) => {
+		if (error) { throw error };
+
+		console.log("data:", data);
+	});
+```
+
+# Apply Arguments
+
+Sometimes you want to add specific arguments for certain steps. This is done easily with `.apply()` at the end of any `.series`, `.parallel`, or `.step` call.
+
+``` javascript
+import Action from "staircase";
+
+const foo = "bar";
+const baz = "zonk";
+const action = new Action(foo);
+
+function createItem(baz, foo, done) {
+	// Do something
+	done();
+}
+
+action
+	// These steps will be run in series with baz as the first argument:
+	.series(
+		createItem,
+		createItem
+	).apply(baz)
+	// After the previous group of steps have completed,
+	// these steps will be run in parallel with baz as the first argument:
+	.parallel(
+		createItem,
+		createItem
+	).apply(baz)
+	// After the previous group of steps have completed,
+	// this single step will be run with baz as the first argument:
+	.step(
+		createItem
+	).apply(baz)
+
 action
 	.results((error, data) => {
 		if (error) { throw error };

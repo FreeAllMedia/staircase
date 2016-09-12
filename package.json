@@ -1,6 +1,6 @@
 {
   "name": "staircase",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Create reusable & portable collections of functions with built-in flow control.",
   "main": "index.js",
   "scripts": {
