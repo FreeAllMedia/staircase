@@ -1,7 +1,7 @@
 import Staircase from "../../lib/staircase.js";
 import sinon from "sinon";
 
-describe("staircase.step(stepFunction)", () => {
+describe("staircase.step(stepFunction) (in another step)", () => {
 		let staircase;
 
 	beforeEach(() => {
@@ -19,7 +19,9 @@ describe("staircase.step(stepFunction)", () => {
 		});
 
 		staircase
-		.step(stepFunctionOne)
+		.step(stepFunctionOne);
+
+		staircase
 		.results(error => {
 			stepFunctionTwo.called.should.be.true;
 
