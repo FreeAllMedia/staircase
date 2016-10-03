@@ -18,6 +18,10 @@ var _mrt = require("mrt");
 
 var _mrt2 = _interopRequireDefault(_mrt);
 
+var _events = require("events");
+
+var _events2 = _interopRequireDefault(_events);
+
 var _stepGroupSetter = require("./stepGroupSetter.js");
 
 var _stepGroupSetter2 = _interopRequireDefault(_stepGroupSetter);
@@ -55,6 +59,8 @@ var Staircase = function (_Component) {
 			_.currentStep = null;
 			_.stepIndex = 0;
 
+			this.events = new _events2.default();
+
 			this.link("series", _stepGroupSetter2.default).apply(this, "series");
 			this.link("parallel", _stepGroupSetter2.default).apply(this, "parallel");
 
@@ -63,6 +69,12 @@ var Staircase = function (_Component) {
 			this.properties("stepGroups").multi.aggregate.flat.then(this[reorderStepGroup]);
 
 			this.arguments.apply(this, arguments);
+		}
+	}, {
+		key: "on",
+		value: function on(name, listener) {
+			this.events.on(name, listener);
+			return this;
 		}
 	}, {
 		key: "context",
@@ -144,6 +156,8 @@ var Staircase = function (_Component) {
 	}, {
 		key: runStep,
 		value: function value(stepData, done) {
+			var _this3 = this;
+
 			var step = stepData[0];
 			var context = stepData[1];
 			var stepGroup = stepData[2];
@@ -161,12 +175,34 @@ var Staircase = function (_Component) {
 
 			var stepArguments = stepGroup.extraArguments || [];
 
-			stepArguments = this.arguments().concat(stepArguments).concat([clearCurrentStep]);
+			stepArguments = this.arguments().concat(stepArguments);
 
 			_.currentStep = stepGroup;
 			_.after = _.currentStep;
 
-			step.call.apply(step, [context].concat(_toConsumableArray(stepArguments)));
+			this.events.emit("step:before", {
+				name: step.name,
+				arguments: stepArguments
+			});
+
+			var startTime = new Date();
+
+			var fullArguments = stepArguments.concat([function (error, data) {
+				var endTime = new Date();
+				var timeDifference = endTime - startTime;
+
+				_this3.events.emit("step:after", {
+					name: step.name,
+					arguments: stepArguments,
+					error: error,
+					data: data,
+					duration: timeDifference
+				});
+
+				clearCurrentStep(error, data);
+			}]);
+
+			step.call.apply(step, [context].concat(_toConsumableArray(fullArguments)));
 		}
 
 		/**

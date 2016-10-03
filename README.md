@@ -76,6 +76,17 @@ action
  * data returned by the steps will be available in the `data` argument as an array of values.
  */
 action
+	.on("step:before", step => {
+		step.name; // name of the step about to be executed
+		step.arguments; // arguments about to be sent to the step
+	})
+	.on("step:after", step => {
+		step.name; // name of the step about to be executed
+		step.arguments; // arguments about to be sent to the step
+		step.error; // error returned by the step
+		step.data; // data returned by the step
+		step.duration; // duration of the step execution in ms
+	})
 	.results((error, data) => {
 		if (error) { throw error };
 
