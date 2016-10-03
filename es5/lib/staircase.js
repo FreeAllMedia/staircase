@@ -159,7 +159,9 @@ var Staircase = function (_Component) {
 				done(error, data);
 			}
 
-			var stepArguments = this.arguments().concat([clearCurrentStep]);
+			var stepArguments = stepGroup.extraArguments || [];
+
+			stepArguments = this.arguments().concat(stepArguments).concat([clearCurrentStep]);
 
 			_.currentStep = stepGroup;
 			_.after = _.currentStep;
