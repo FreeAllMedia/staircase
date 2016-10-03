@@ -38,4 +38,13 @@ describe("stepGroupSetter.apply(...extraArguments)", () => {
 			{ type: type, steps: steps, extraArguments: extraArguments }
 		]);
 	});
+
+	it("should call each step with the extra arguments", done => {
+		staircase.results(() => {
+			steps.forEach(step => {
+				step.calledWith(1, 2, 3).should.be.true;
+			});
+			done();
+		});
+	});
 });
