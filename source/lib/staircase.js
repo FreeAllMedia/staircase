@@ -1,7 +1,7 @@
-
 import privateData from "incognito";
 import Async from "flowsync";
 import Component from "mrt";
+import EventEmitter from "events";
 
 import StepGroupSetter from "./stepGroupSetter.js";
 
@@ -18,6 +18,8 @@ export default class Staircase extends Component {
 		_.currentStep = null;
 		_.stepIndex = 0;
 
+		this.events = new EventEmitter();
+
 		this.link("series", StepGroupSetter).apply(this, "series");
 		this.link("parallel", StepGroupSetter).apply(this, "parallel");
 
@@ -30,6 +32,11 @@ export default class Staircase extends Component {
 			.then(this[reorderStepGroup]);
 
 		this.arguments(...initialArguments);
+	}
+
+	on(name, listener) {
+		this.events.on(name, listener);
+		return this;
 	}
 
 	context(newContext) {
@@ -130,12 +137,34 @@ export default class Staircase extends Component {
 
 		let stepArguments = stepGroup.extraArguments || [];
 
-		stepArguments = this.arguments().concat(stepArguments).concat([clearCurrentStep]);
+		stepArguments = this.arguments().concat(stepArguments);
 
 		_.currentStep = stepGroup;
 		_.after = _.currentStep;
 
-		step.call(context, ...stepArguments);
+		this.events.emit("step:before", {
+			name: step.name,
+			arguments: stepArguments
+		});
+
+		const startTime = new Date();
+
+		const fullArguments = stepArguments.concat([(error, data) => {
+			const endTime = new Date();
+			const timeDifference = endTime - startTime;
+
+			this.events.emit("step:after", {
+				name: step.name,
+				arguments: stepArguments,
+				error: error,
+				data: data,
+				duration: timeDifference
+			});
+
+			clearCurrentStep(error, data);
+		}]);
+
+		step.call(context, ...fullArguments);
 	}
 
 	/**
