@@ -128,7 +128,9 @@ export default class Staircase extends Component {
 			done(error, data);
 		}
 
-		const stepArguments = this.arguments().concat([clearCurrentStep]);
+		let stepArguments = stepGroup.extraArguments || [];
+
+		stepArguments = this.arguments().concat(stepArguments).concat([clearCurrentStep]);
 
 		_.currentStep = stepGroup;
 		_.after = _.currentStep;
