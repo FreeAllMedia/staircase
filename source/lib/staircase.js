@@ -16,6 +16,7 @@ export default class Staircase extends Component {
 
 		_.context = this;
 		_.currentStep = null;
+		_.currentStepGroup = null;
 		_.stepIndex = 0;
 
 		this.events = new EventEmitter();
@@ -49,13 +50,22 @@ export default class Staircase extends Component {
 		}
 	}
 
+	get currentStepGroup() {
+		return privateData(this).currentStepGroup;
+	}
+
+	get lastStepGroup() {
+		const stepGroups = this.stepGroups();
+		return stepGroups[stepGroups.length - 1];
+	}
+
 	get currentStep() {
 		return privateData(this).currentStep;
 	}
 
 	get lastStep() {
-		const stepGroups = this.stepGroups();
-		return stepGroups[stepGroups.length - 1];
+		const steps = this.lastStepGroup.steps;
+		return steps[steps.length - 1];
 	}
 
 	get append() {
@@ -130,6 +140,7 @@ export default class Staircase extends Component {
 
 		function clearCurrentStep(error, data) {
 			_.currentStep = null;
+			_.currentStepGroup = null;
 			_.after = originalAfter;
 
 			done(error, data);
@@ -139,8 +150,9 @@ export default class Staircase extends Component {
 
 		stepArguments = this.arguments().concat(stepArguments);
 
-		_.currentStep = stepGroup;
-		_.after = _.currentStep;
+		_.currentStep = step;
+		_.currentStepGroup = stepGroup;
+		_.after = _.currentStepGroup;
 
 		this.events.emit("step:before", {
 			name: step.name,
@@ -210,13 +222,10 @@ export default class Staircase extends Component {
 
 		if (_.after) {
 			const stepGroups = this.stepGroups();
-
 			const originalIndex = stepGroups.indexOf(stepGroup);
-
 			stepGroups.splice(originalIndex, 1);
 
 			const afterIndex = stepGroups.indexOf(_.after) + 1;
-
 			stepGroups.splice(afterIndex, 0, stepGroup);
 		}
 

@@ -17,7 +17,7 @@ describe("staircase.after(step)", () => {
 		stepThree = sinon.spy(function three(done){ done(); });
 		stepFour = sinon.spy(function four(done){ done(); });
 
-		targetStep = staircase.step(stepOne).lastStep;
+		targetStep = staircase.step(stepOne).lastStepGroup;
 	});
 
 	it("should return itself to enable chaining", () => {

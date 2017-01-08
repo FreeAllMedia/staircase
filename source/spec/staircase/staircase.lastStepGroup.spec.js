@@ -1,6 +1,6 @@
 import Staircase from "../../lib/staircase.js";
 
-describe("staircase.lastStep", () => {
+describe("staircase.lastStepGroup", () => {
 	let staircase;
 
 	beforeEach(() => {
@@ -11,8 +11,8 @@ describe("staircase.lastStep", () => {
 	});
 
 	it("should return the last step in the staircase", () => {
-		const steps = staircase.lastStepGroup.steps;
-		const lastStep = steps[steps.length - 1];
-		staircase.lastStep.should.eql(lastStep);
+		const stepGroups = staircase.stepGroups();
+		const lastStepGroup = stepGroups[stepGroups.length - 1];
+		staircase.lastStepGroup.should.eql(lastStepGroup);
 	});
 });

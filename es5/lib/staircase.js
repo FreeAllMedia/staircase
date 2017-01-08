@@ -57,6 +57,7 @@ var Staircase = function (_Component) {
 
 			_.context = this;
 			_.currentStep = null;
+			_.currentStepGroup = null;
 			_.stepIndex = 0;
 
 			this.events = new _events2.default();
@@ -168,6 +169,7 @@ var Staircase = function (_Component) {
 
 			function clearCurrentStep(error, data) {
 				_.currentStep = null;
+				_.currentStepGroup = null;
 				_.after = originalAfter;
 
 				done(error, data);
@@ -177,8 +179,9 @@ var Staircase = function (_Component) {
 
 			stepArguments = this.arguments().concat(stepArguments);
 
-			_.currentStep = stepGroup;
-			_.after = _.currentStep;
+			_.currentStep = step;
+			_.currentStepGroup = stepGroup;
+			_.after = _.currentStepGroup;
 
 			this.events.emit("step:before", {
 				name: step.name,
@@ -243,17 +246,25 @@ var Staircase = function (_Component) {
 
 			if (_.after) {
 				var stepGroups = this.stepGroups();
-
 				var originalIndex = stepGroups.indexOf(stepGroup);
-
 				stepGroups.splice(originalIndex, 1);
 
 				var afterIndex = stepGroups.indexOf(_.after) + 1;
-
 				stepGroups.splice(afterIndex, 0, stepGroup);
 			}
 
 			_.after = stepGroup;
+		}
+	}, {
+		key: "currentStepGroup",
+		get: function get() {
+			return (0, _incognito2.default)(this).currentStepGroup;
+		}
+	}, {
+		key: "lastStepGroup",
+		get: function get() {
+			var stepGroups = this.stepGroups();
+			return stepGroups[stepGroups.length - 1];
 		}
 	}, {
 		key: "currentStep",
@@ -263,8 +274,8 @@ var Staircase = function (_Component) {
 	}, {
 		key: "lastStep",
 		get: function get() {
-			var stepGroups = this.stepGroups();
-			return stepGroups[stepGroups.length - 1];
+			var steps = this.lastStepGroup.steps;
+			return steps[steps.length - 1];
 		}
 	}, {
 		key: "append",
