@@ -2,10 +2,6 @@
 
 Create portable & reusable sequences of functions.
 
-* Easy to use.
-* 100% test coverage.
-* 
-
 ## Getting Started
 
 1. Install staircase
